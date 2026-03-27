@@ -103,15 +103,15 @@ contains
       ! dom_pos_first
       call check(nf90_get_att( ncid, NF90_GLOBAL, 'DOMAIN_halo_size_end', halo1 ))
       ! nav_lon
-      allocate( nav_lon(ni_p, nj_p) )
-      allocate( nav_lat(ni_p, nj_p) )
+      allocate( nav_lon(ni_p) )
+      allocate( nav_lat(nj_p) )
       ALLOCATE( nav_lev(nk_p) )
       call memcount(1, 'r', 2*ni_p*nj_p + nk_p )
       call check(nf90_inq_varid( ncid, 'nav_lon', varid ))
-      call check(nf90_get_var( ncid, varid, nav_lon, [1, 1], [ni_p, nj_p] ))
+      call check(nf90_get_var( ncid, varid, nav_lon, [1, 1], [ni_p, 1] ))
       ! nav_lat
       call check(nf90_inq_varid( ncid, 'nav_lat', varid ))
-      call check(nf90_get_var( ncid, varid, nav_lat, [1, 1], [ni_p, nj_p] ))
+      call check(nf90_get_var( ncid, varid, nav_lat, [1, 1], [1, nj_p] ))
       ! nav_lev
       call check(nf90_inq_varid( ncid, 'nav_lev', varid ))
       call check(nf90_get_var( ncid, varid, nav_lev) )
@@ -147,8 +147,7 @@ contains
       USE netcdf
       use config_pdaf, only: screen
       use mod_memcount_pdaf, only: memcount
-      use nemo_pdaf, only: jpiglo, jpjglo, jpk, i0, j0, ni_p, nj_p, nk_p, &
-                           glamt, glamu, glamv, gphit, gphiu, gphiv, tmask
+      use nemo_pdaf, only: jpiglo, jpjglo, jpk, i0, j0, ni_p, nj_p, nk_p, gphif, tmask
       use parallel_pdaf, only: mype_model, npes_model, comm_model, MPIerr
       IMPLICIT NONE
       ! Local variables
@@ -176,34 +175,6 @@ contains
       call check(nf90_inq_dimid( ncid, 'z', varid ))
       call check(nf90_inquire_dimension( ncid, varid, len=jpk ))
       nk_p = jpk
-      ! Allocate arrays with dimensions (time, y, x)
-      ALLOCATE( glamt(ni_p, nj_p) )
-      ALLOCATE( glamu(ni_p, nj_p) )
-      ALLOCATE( glamv(ni_p, nj_p) )
-      ALLOCATE( gphit(ni_p, nj_p) )
-      ALLOCATE( gphiu(ni_p, nj_p) )
-      ALLOCATE( gphiv(ni_p, nj_p) )
-      call memcount(1, 'r', 6*ni_p*nj_p)
-      ! Read 3D grid variables
-      ! glamt
-      call check(nf90_inq_varid( ncid, 'glamt', varid ))
-      call check(nf90_get_var( ncid, varid, glamt, [i0, j0, 1], [ni_p, nj_p, 1] ))
-      ! glamu
-      call check(nf90_inq_varid( ncid, 'glamu', varid ))
-      call check(nf90_get_var( ncid, varid, glamu, [i0, j0, 1], [ni_p, nj_p, 1] ))
-      ! glamv
-      call check(nf90_inq_varid( ncid, 'glamv', varid ))
-      call check(nf90_get_var( ncid, varid, glamv, [i0, j0, 1], [ni_p, nj_p, 1] ))
-      ! gphit
-      call check(nf90_inq_varid( ncid, 'gphit', varid ))
-      call check(nf90_get_var( ncid, varid, gphit, [i0, j0, 1], [ni_p, nj_p, 1] ))
-      ! gphiu
-      call check(nf90_inq_varid( ncid, 'gphiu', varid ))
-      call check(nf90_get_var( ncid, varid, gphiu, [i0, j0, 1], [ni_p, nj_p, 1] ))
-      call check(nf90_get_var( ncid, varid, gphiu, [i0, j0, 1], [ni_p, nj_p, 1] ))
-      ! gphiv
-      call check(nf90_inq_varid( ncid, 'gphiv', varid ))
-      call check(nf90_get_var( ncid, varid, gphiv, [i0, j0, 1], [ni_p, nj_p, 1] ))
       ! calculate t_mask
       allocate( k_top(ni_p, nj_p) )
       allocate( k_bot(ni_p, nj_p) )

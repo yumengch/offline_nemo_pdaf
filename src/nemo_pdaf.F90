@@ -19,15 +19,16 @@ module nemo_pdaf
    integer :: jpiglo, jpjglo, jpk        ! Global NEMO grid dimensions
    integer :: halo0(2), halo1(2)         ! The halo information for restart files
    integer :: time_counter(1)            ! Time counter from restart file
-   integer  :: nn_time0                 ! initial time of day in hhmm
+   integer  :: nn_time0                  ! initial time of day in hhmm
    real(pwp) :: ndastp                   ! NEMO time string
                                          ! spcified in NEMO namelist namrun
+   integer :: year, month, day           ! Date information from ndastp
+   real(pwp) :: time_days                ! Time in days since 1950-01-01
 
-   real(pwp), allocatable :: glamt(:,:), glamu(:,:), glamv(:,:)       ! Longitudes
-   real(pwp), allocatable :: gphit(:,:), gphiu(:,:), gphiv(:,:)       ! Latitudes
-   real(4), allocatable :: nav_lev(:)      ! Depths
-   real(4), allocatable   :: nav_lon(:,:), nav_lat(:,:)   ! Restart file grid
-   real(pwp), allocatable :: tmask(:,:,:)     ! Temperature mask array
+   real(4), allocatable   :: nav_lev(:)               ! Depths
+   real(4), allocatable   :: nav_lon(:), nav_lat(:)   ! Restart file grid
+   real(pwp)              :: dlon, dlat     ! Grid spacing in longitude and latitude
+   real(pwp), allocatable :: tmask(:,:,:)   ! Temperature mask array
    ! wet points for state vectors
    integer :: use_wet_state=0               ! 1: State vector contains full columns where surface grid point is wet
                                             ! 2: State vector only contains wet grid points
@@ -74,6 +75,8 @@ contains
       integer :: cnt, cnt_all, cnt_layers   ! Counters
       integer :: nwet_g, nwet3d_g           ! Global sums of wet grid point
       real(pwp) :: lim_coords(2,2)          ! Limiting coordinates of sub-domain
+      ! set the time domain
+      call yymmdd_to_days(ndastp, year, month, day, time_days)
       ! *** set dimension of 2d and 3d fields in state vector ***
       ! Size of 2d/3d boxes without halo
       dim_2d_p = ni_p * nj_p
@@ -208,13 +211,60 @@ contains
       ! ******************************************************************
       ! *** Specify domain limits to limit observations to sub-domains ***
       ! ******************************************************************
-      lim_coords(1,1) = minval(glamt(:, :)) * deg2rad
-      lim_coords(1,2) = maxval(glamt(:, :)) * deg2rad
-      lim_coords(2,1) = maxval(gphit(:, :)) * deg2rad
-      lim_coords(2,2) = minval(gphit(:, :)) * deg2rad
+      dlon = nav_lon(2) - nav_lon(1)
+      dlat = nav_lat(2) - nav_lat(1)
+      lim_coords(1,1) = nav_lon(1) * deg2rad
+      lim_coords(1,2) = nav_lon(ni_p) * deg2rad
+      lim_coords(2,1) = nav_lat(1) * deg2rad
+      lim_coords(2,2) = nav_lat(nj_p) * deg2rad
 
       call PDAFomi_set_domain_limits(lim_coords)
 
    end subroutine set_nemo_grid
 
+   subroutine yymmdd_to_days(yymmdd, y, m, d, days)
+      implicit none
+      real(pwp), intent(in) :: yymmdd ! Date in the format yyyymmdd
+      integer, intent(out) :: y, m, d ! Year, month, day
+      integer, intent(out) :: days  ! Number of days since 1950-01-01
+      integer :: yy, mm
+      integer :: nleap
+
+      y = yymmdd / 10000
+      m = mod(yymmdd / 100, 100)
+      d = mod(yymmdd, 100)
+      ! find the number of days of leap year since 1950
+      days = 0
+      do yy = 1950, y - 1
+         if (is_leap(yy)) then
+            days = days + 366
+         else
+            days = days + 365
+         end if
+      end do
+      ! Add the number of days in the months of the current year
+      do mm = 1, m - 1
+         days = days + days_in_month(mm, y)
+      end do
+
+      days = days + d - 1
+   end subroutine yymmdd_to_days
+
+   ! Check if a given year is a leap year
+   logical function is_leap(year)
+      implicit none
+      integer, intent(in) :: year
+      is_leap = (mod(year, 4) == 0 .and. mod(year, 100) /= 0) .or. (mod(year, 400) == 0)
+   end function is_leap
+
+   ! Get the number of days in a given month and year
+   integer function days_in_month(month, year)
+      implicit none
+      integer, intent(in) :: month, year
+      integer, dimension(12) :: mlen
+
+      mlen = (/ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /)
+      days_in_month = mlen(month)
+      if (month == 2 .and. is_leap(year)) days_in_month = 29
+   end function days_in_month
 end module nemo_pdaf
