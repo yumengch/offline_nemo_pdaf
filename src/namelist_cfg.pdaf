@@ -71,3 +71,31 @@
   sradius = 20000
   noise_amp = 0.5
 /
+
+! Physical observations: paths are relative to the analysis working directory.
+! Enable only after validating cycle timing, error floors and localization.
+&en4_nml
+  assim_en4_temp = .false.
+  assim_en4_salt = .false.
+  id_temp = 1
+  id_salt = 2
+  path_en4 = 'obsproc'
+  prefix_en4 = 'EN.4.2.2.f.analysis.g10.'
+  assim_day = 0 ! Monthly: zero selects the final calendar day.
+  min_weight = 0.5
+  temp_error_floor = 0.5 ! degC; experiment-specific assumption.
+  salt_error_floor = 0.1 ! psu; experiment-specific assumption.
+  lradius = 20000 ! metres; horizontal localization only.
+  sradius = 20000
+/
+
+&ostia_nml
+  assim_ostia = .false.
+  id_temp = 1
+  path_ostia = 'obsproc'
+  min_pixels = 1
+  error_floor = 0.5 ! degC; representation-error floor.
+  max_ice_fraction = 0.0
+  lradius = 20000 ! metres; horizontal localization only.
+  sradius = 20000
+/

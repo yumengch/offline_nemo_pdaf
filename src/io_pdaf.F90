@@ -147,7 +147,8 @@ contains
       USE netcdf
       use config_pdaf, only: screen
       use mod_memcount_pdaf, only: memcount
-      use nemo_pdaf, only: jpiglo, jpjglo, jpk, i0, j0, ni_p, nj_p, nk_p, gphif, tmask
+      use nemo_pdaf, only: jpiglo, jpjglo, jpk, i0, j0, ni_p, nj_p, nk_p, &
+                           tmask
       use parallel_pdaf, only: mype_model, npes_model, comm_model, MPIerr
       IMPLICIT NONE
       ! Local variables
